@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 stopwords = set([
     'yang', 'dan', 'untuk', 'dari', 'pada', 'dengan', 'oleh', 'atau', 'juga',
     'dalam', 'ke', 'di', 'ini', 'itu', 'sebagai', 'adalah', 'dapat', 'digunakan',
-    'cocok', 'guna', 'tas', 'kulit', 'warna', 'berwarna'
+    'cocok', 'guna', 'tas', 'kulit', 'warna', 'berwarna', 'asli'
 ])
 
 def preprocess_terarah(deskripsi: str) -> List[str]:
@@ -31,21 +31,28 @@ def preprocess_terarah(deskripsi: str) -> List[str]:
     return tokens
 
 def compute_tf(doc: List[str]) -> Dict[str, float]:
+    if not doc:
+        return {}
     count = Counter(doc)
     total = len(doc)
     return {term: freq / total for term, freq in count.items()}
 
+
 def compute_idf(all_docs: List[List[str]]) -> Dict[str, float]:
     N = len(all_docs)
+    if N == 0:
+        return {}
     all_terms = set(term for doc in all_docs for term in doc)
     idf = {}
     for term in all_terms:
         doc_count = sum(1 for doc in all_docs if term in doc)
+        # Hindari log(0) — tapi doc_count minimal 1 karena term berasal dari dokumen
         idf[term] = math.log(N / doc_count)
     return idf
 
 def compute_tfidf(tf: Dict[str, float], idf: Dict[str, float]) -> Dict[str, float]:
-    return {term: tf[term] * idf.get(term, 0) for term in tf}
+    return {term: tf[term] * idf.get(term, 0.0) for term in tf}
+
 
 def cosine_similarity(vec1: Dict[str, float], vec2: Dict[str, float]) -> float:
     terms = set(vec1.keys()) | set(vec2.keys())
